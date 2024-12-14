@@ -1,0 +1,606 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		C2052BC22D0E1AA7006574F3 /* MacScreenExtenderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2052BC12D0E1AA7006574F3 /* MacScreenExtenderApp.swift */; };
+		C2052BC42D0E1AA7006574F3 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2052BC32D0E1AA7006574F3 /* ContentView.swift */; };
+		C2052BC62D0E1AA9006574F3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2052BC52D0E1AA9006574F3 /* Assets.xcassets */; };
+		C2052BC92D0E1AA9006574F3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2052BC82D0E1AA9006574F3 /* Preview Assets.xcassets */; };
+		C2052BD42D0E1AA9006574F3 /* MacScreenExtenderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2052BD32D0E1AA9006574F3 /* MacScreenExtenderTests.swift */; };
+		C2052BDE2D0E1AA9006574F3 /* MacScreenExtenderUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2052BDD2D0E1AA9006574F3 /* MacScreenExtenderUITests.swift */; };
+		C2052BE02D0E1AA9006574F3 /* MacScreenExtenderUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2052BDF2D0E1AA9006574F3 /* MacScreenExtenderUITestsLaunchTests.swift */; };
+		C26087782D0E1D6700A464A4 /* ScreenExtender.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26087772D0E1D6700A464A4 /* ScreenExtender.swift */; };
+		C260877A2D0E1DC800A464A4 /* WebSocketServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26087792D0E1DC800A464A4 /* WebSocketServer.swift */; };
+		C260877C2D0E1DF600A464A4 /* H264Encoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C260877B2D0E1DF600A464A4 /* H264Encoder.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C2052BD02D0E1AA9006574F3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C2052BB62D0E1AA7006574F3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C2052BBD2D0E1AA7006574F3;
+			remoteInfo = MacScreenExtender;
+		};
+		C2052BDA2D0E1AA9006574F3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C2052BB62D0E1AA7006574F3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C2052BBD2D0E1AA7006574F3;
+			remoteInfo = MacScreenExtender;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		C2052BBE2D0E1AA7006574F3 /* MacScreenExtender.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacScreenExtender.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C2052BC12D0E1AA7006574F3 /* MacScreenExtenderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacScreenExtenderApp.swift; sourceTree = "<group>"; };
+		C2052BC32D0E1AA7006574F3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		C2052BC52D0E1AA9006574F3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C2052BC82D0E1AA9006574F3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		C2052BCA2D0E1AA9006574F3 /* MacScreenExtender.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacScreenExtender.entitlements; sourceTree = "<group>"; };
+		C2052BCF2D0E1AA9006574F3 /* MacScreenExtenderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacScreenExtenderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C2052BD32D0E1AA9006574F3 /* MacScreenExtenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacScreenExtenderTests.swift; sourceTree = "<group>"; };
+		C2052BD92D0E1AA9006574F3 /* MacScreenExtenderUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacScreenExtenderUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C2052BDD2D0E1AA9006574F3 /* MacScreenExtenderUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacScreenExtenderUITests.swift; sourceTree = "<group>"; };
+		C2052BDF2D0E1AA9006574F3 /* MacScreenExtenderUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacScreenExtenderUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		C26087772D0E1D6700A464A4 /* ScreenExtender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenExtender.swift; sourceTree = "<group>"; };
+		C26087792D0E1DC800A464A4 /* WebSocketServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketServer.swift; sourceTree = "<group>"; };
+		C260877B2D0E1DF600A464A4 /* H264Encoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = H264Encoder.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C2052BBB2D0E1AA7006574F3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C2052BCC2D0E1AA9006574F3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C2052BD62D0E1AA9006574F3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		C2052BB52D0E1AA7006574F3 = {
+			isa = PBXGroup;
+			children = (
+				C2052BC02D0E1AA7006574F3 /* MacScreenExtender */,
+				C2052BD22D0E1AA9006574F3 /* MacScreenExtenderTests */,
+				C2052BDC2D0E1AA9006574F3 /* MacScreenExtenderUITests */,
+				C2052BBF2D0E1AA7006574F3 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C2052BBF2D0E1AA7006574F3 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C2052BBE2D0E1AA7006574F3 /* MacScreenExtender.app */,
+				C2052BCF2D0E1AA9006574F3 /* MacScreenExtenderTests.xctest */,
+				C2052BD92D0E1AA9006574F3 /* MacScreenExtenderUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C2052BC02D0E1AA7006574F3 /* MacScreenExtender */ = {
+			isa = PBXGroup;
+			children = (
+				C26087762D0E1D4A00A464A4 /* Core */,
+				C2052BC12D0E1AA7006574F3 /* MacScreenExtenderApp.swift */,
+				C2052BC32D0E1AA7006574F3 /* ContentView.swift */,
+				C2052BC52D0E1AA9006574F3 /* Assets.xcassets */,
+				C2052BCA2D0E1AA9006574F3 /* MacScreenExtender.entitlements */,
+				C2052BC72D0E1AA9006574F3 /* Preview Content */,
+			);
+			path = MacScreenExtender;
+			sourceTree = "<group>";
+		};
+		C2052BC72D0E1AA9006574F3 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				C2052BC82D0E1AA9006574F3 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		C2052BD22D0E1AA9006574F3 /* MacScreenExtenderTests */ = {
+			isa = PBXGroup;
+			children = (
+				C2052BD32D0E1AA9006574F3 /* MacScreenExtenderTests.swift */,
+			);
+			path = MacScreenExtenderTests;
+			sourceTree = "<group>";
+		};
+		C2052BDC2D0E1AA9006574F3 /* MacScreenExtenderUITests */ = {
+			isa = PBXGroup;
+			children = (
+				C2052BDD2D0E1AA9006574F3 /* MacScreenExtenderUITests.swift */,
+				C2052BDF2D0E1AA9006574F3 /* MacScreenExtenderUITestsLaunchTests.swift */,
+			);
+			path = MacScreenExtenderUITests;
+			sourceTree = "<group>";
+		};
+		C26087762D0E1D4A00A464A4 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				C26087772D0E1D6700A464A4 /* ScreenExtender.swift */,
+				C26087792D0E1DC800A464A4 /* WebSocketServer.swift */,
+				C260877B2D0E1DF600A464A4 /* H264Encoder.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C2052BBD2D0E1AA7006574F3 /* MacScreenExtender */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C2052BE32D0E1AA9006574F3 /* Build configuration list for PBXNativeTarget "MacScreenExtender" */;
+			buildPhases = (
+				C2052BBA2D0E1AA7006574F3 /* Sources */,
+				C2052BBB2D0E1AA7006574F3 /* Frameworks */,
+				C2052BBC2D0E1AA7006574F3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MacScreenExtender;
+			productName = MacScreenExtender;
+			productReference = C2052BBE2D0E1AA7006574F3 /* MacScreenExtender.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C2052BCE2D0E1AA9006574F3 /* MacScreenExtenderTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C2052BE62D0E1AA9006574F3 /* Build configuration list for PBXNativeTarget "MacScreenExtenderTests" */;
+			buildPhases = (
+				C2052BCB2D0E1AA9006574F3 /* Sources */,
+				C2052BCC2D0E1AA9006574F3 /* Frameworks */,
+				C2052BCD2D0E1AA9006574F3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C2052BD12D0E1AA9006574F3 /* PBXTargetDependency */,
+			);
+			name = MacScreenExtenderTests;
+			productName = MacScreenExtenderTests;
+			productReference = C2052BCF2D0E1AA9006574F3 /* MacScreenExtenderTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		C2052BD82D0E1AA9006574F3 /* MacScreenExtenderUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C2052BE92D0E1AA9006574F3 /* Build configuration list for PBXNativeTarget "MacScreenExtenderUITests" */;
+			buildPhases = (
+				C2052BD52D0E1AA9006574F3 /* Sources */,
+				C2052BD62D0E1AA9006574F3 /* Frameworks */,
+				C2052BD72D0E1AA9006574F3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C2052BDB2D0E1AA9006574F3 /* PBXTargetDependency */,
+			);
+			name = MacScreenExtenderUITests;
+			productName = MacScreenExtenderUITests;
+			productReference = C2052BD92D0E1AA9006574F3 /* MacScreenExtenderUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		C2052BB62D0E1AA7006574F3 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1540;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					C2052BBD2D0E1AA7006574F3 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					C2052BCE2D0E1AA9006574F3 = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = C2052BBD2D0E1AA7006574F3;
+					};
+					C2052BD82D0E1AA9006574F3 = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = C2052BBD2D0E1AA7006574F3;
+					};
+				};
+			};
+			buildConfigurationList = C2052BB92D0E1AA7006574F3 /* Build configuration list for PBXProject "MacScreenExtender" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = C2052BB52D0E1AA7006574F3;
+			productRefGroup = C2052BBF2D0E1AA7006574F3 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C2052BBD2D0E1AA7006574F3 /* MacScreenExtender */,
+				C2052BCE2D0E1AA9006574F3 /* MacScreenExtenderTests */,
+				C2052BD82D0E1AA9006574F3 /* MacScreenExtenderUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C2052BBC2D0E1AA7006574F3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C2052BC92D0E1AA9006574F3 /* Preview Assets.xcassets in Resources */,
+				C2052BC62D0E1AA9006574F3 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C2052BCD2D0E1AA9006574F3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C2052BD72D0E1AA9006574F3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C2052BBA2D0E1AA7006574F3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C2052BC42D0E1AA7006574F3 /* ContentView.swift in Sources */,
+				C260877C2D0E1DF600A464A4 /* H264Encoder.swift in Sources */,
+				C26087782D0E1D6700A464A4 /* ScreenExtender.swift in Sources */,
+				C260877A2D0E1DC800A464A4 /* WebSocketServer.swift in Sources */,
+				C2052BC22D0E1AA7006574F3 /* MacScreenExtenderApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C2052BCB2D0E1AA9006574F3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C2052BD42D0E1AA9006574F3 /* MacScreenExtenderTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C2052BD52D0E1AA9006574F3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C2052BDE2D0E1AA9006574F3 /* MacScreenExtenderUITests.swift in Sources */,
+				C2052BE02D0E1AA9006574F3 /* MacScreenExtenderUITestsLaunchTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C2052BD12D0E1AA9006574F3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C2052BBD2D0E1AA7006574F3 /* MacScreenExtender */;
+			targetProxy = C2052BD02D0E1AA9006574F3 /* PBXContainerItemProxy */;
+		};
+		C2052BDB2D0E1AA9006574F3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C2052BBD2D0E1AA7006574F3 /* MacScreenExtender */;
+			targetProxy = C2052BDA2D0E1AA9006574F3 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		C2052BE12D0E1AA9006574F3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		C2052BE22D0E1AA9006574F3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		C2052BE42D0E1AA9006574F3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MacScreenExtender/MacScreenExtender.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"MacScreenExtender/Preview Content\"";
+				DEVELOPMENT_TEAM = F8FHD2SSRY;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = arman.MacScreenExtender;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		C2052BE52D0E1AA9006574F3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MacScreenExtender/MacScreenExtender.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"MacScreenExtender/Preview Content\"";
+				DEVELOPMENT_TEAM = F8FHD2SSRY;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = arman.MacScreenExtender;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		C2052BE72D0E1AA9006574F3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = F8FHD2SSRY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = arman.MacScreenExtenderTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacScreenExtender.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MacScreenExtender";
+			};
+			name = Debug;
+		};
+		C2052BE82D0E1AA9006574F3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = F8FHD2SSRY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = arman.MacScreenExtenderTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacScreenExtender.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MacScreenExtender";
+			};
+			name = Release;
+		};
+		C2052BEA2D0E1AA9006574F3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = F8FHD2SSRY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = arman.MacScreenExtenderUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = MacScreenExtender;
+			};
+			name = Debug;
+		};
+		C2052BEB2D0E1AA9006574F3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = F8FHD2SSRY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = arman.MacScreenExtenderUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = MacScreenExtender;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C2052BB92D0E1AA7006574F3 /* Build configuration list for PBXProject "MacScreenExtender" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C2052BE12D0E1AA9006574F3 /* Debug */,
+				C2052BE22D0E1AA9006574F3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C2052BE32D0E1AA9006574F3 /* Build configuration list for PBXNativeTarget "MacScreenExtender" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C2052BE42D0E1AA9006574F3 /* Debug */,
+				C2052BE52D0E1AA9006574F3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C2052BE62D0E1AA9006574F3 /* Build configuration list for PBXNativeTarget "MacScreenExtenderTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C2052BE72D0E1AA9006574F3 /* Debug */,
+				C2052BE82D0E1AA9006574F3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C2052BE92D0E1AA9006574F3 /* Build configuration list for PBXNativeTarget "MacScreenExtenderUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C2052BEA2D0E1AA9006574F3 /* Debug */,
+				C2052BEB2D0E1AA9006574F3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = C2052BB62D0E1AA7006574F3 /* Project object */;
+}
