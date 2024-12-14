@@ -31,6 +31,7 @@ struct ContentView: View {
     @State private var renderer: MetalRenderer?
     @State private var decoder: H264Decoder?
     @State private var metalView: MTKView?
+    @State private var hostIP: String = ""
     
     var body: some View {
         ZStack {
@@ -38,11 +39,16 @@ struct ContentView: View {
                 MetalView(renderer: renderer)
                     .edgesIgnoringSafeArea(.all)
             } else {
-                Text("Initializing...")
+                Text("Initializing Metal renderer...")
             }
             
             VStack {
                 Spacer()
+                if !webSocketClient.isConnected {
+                    TextField("Enter Mac's IP address", text: $hostIP)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding()
+                }
                 HStack {
                     Button(action: connect) {
                         Text(webSocketClient.isConnected ? "Disconnect" : "Connect")
@@ -51,6 +57,7 @@ struct ContentView: View {
                             .foregroundColor(.white)
                             .cornerRadius(8)
                     }
+                    .disabled(hostIP.isEmpty && !webSocketClient.isConnected)
                 }
                 .padding()
             }
@@ -85,7 +92,7 @@ struct ContentView: View {
         if webSocketClient.isConnected {
             webSocketClient.disconnect()
         } else {
-            webSocketClient.connect(to: "172.20.10.3", port: 8080)
+            webSocketClient.connect(to: hostIP, port: 8080)
         }
     }
 }

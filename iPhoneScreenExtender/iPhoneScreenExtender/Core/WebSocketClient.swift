@@ -11,72 +11,91 @@ import Network
 class WebSocketClient: ObservableObject {
     private var connection: NWConnection?
     private let queue = DispatchQueue(label: "com.arman.iphonescreenextender.websocket")
+    private var lastHost: String?
+    private var lastPort: Int?
     
     @Published var isConnected = false
     var onFrameReceived: ((Data) -> Void)?
     
     func connect(to host: String, port: Int) {
+        print("WebSocket: Attempting to connect to \(host):\(port)")
+        lastHost = host
+        lastPort = port
+        
         let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(host), port: NWEndpoint.Port(integerLiteral: UInt16(port)))
         
-        let parameters = NWParameters(tls: nil)
+        // Create parameters with explicit WebSocket support
+        let parameters = NWParameters.tcp
+        parameters.allowLocalEndpointReuse = true
+        
         let wsOptions = NWProtocolWebSocket.Options()
         wsOptions.autoReplyPing = true
+        wsOptions.maximumMessageSize = 1_000_000 // Allow larger messages
         parameters.defaultProtocolStack.applicationProtocols.insert(wsOptions, at: 0)
         
+        // Set up connection
         connection = NWConnection(to: endpoint, using: parameters)
         
         connection?.stateUpdateHandler = { [weak self] state in
             DispatchQueue.main.async {
                 switch state {
                 case .ready:
-                    print("WebSocket: Connected")
+                    print("WebSocket: Connected successfully")
                     self?.isConnected = true
                     self?.receiveNextFrame()
+                case .setup:
+                    print("WebSocket: Setting up connection...")
+                case .preparing:
+                    print("WebSocket: Preparing connection...")
+                case .waiting(let error):
+                    print("WebSocket: Waiting to connect... Error: \(error)")
                 case .failed(let error):
-                    print("WebSocket: Connection failed: \(error)")
+                    print("WebSocket: Connection failed with error: \(error)")
                     self?.isConnected = false
-                    self?.reconnect()
                 case .cancelled:
                     print("WebSocket: Connection cancelled")
                     self?.isConnected = false
                 default:
-                    break
+                    print("WebSocket: State changed to \(state)")
                 }
             }
         }
         
+        print("WebSocket: Starting connection...")
         connection?.start(queue: queue)
-    }
-    
-    private func reconnect() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            guard let self = self,
-                  !self.isConnected else { return }
-            
-            print("WebSocket: Attempting to reconnect...")
-            self.connection?.cancel()
-            self.connect(to: "localhost", port: 8080) // You might want to make these configurable
-        }
+        
+        // Start receiving immediately
+        receiveNextFrame()
     }
     
     private func receiveNextFrame() {
-        connection?.receiveMessage { [weak self] content, context, isComplete, error in
+        guard let conn = connection else { return }
+        
+        conn.receiveMessage { [weak self] content, context, isComplete, error in
             if let error = error {
                 print("WebSocket: Receive error: \(error)")
+                DispatchQueue.main.async {
+                    self?.isConnected = false
+                }
                 return
             }
             
             if let content = content,
                let metadata = context?.protocolMetadata.first as? NWProtocolWebSocket.Metadata,
                metadata.opcode == .binary {
+                print("WebSocket: Received frame of size: \(content.count) bytes")
                 self?.onFrameReceived?(content)
             }
             
-            self?.receiveNextFrame()
+            // Continue receiving if still connected
+            if self?.isConnected == true {
+                self?.receiveNextFrame()
+            }
         }
     }
     
     func disconnect() {
+        print("WebSocket: Disconnecting...")
         connection?.cancel()
         connection = nil
         isConnected = false

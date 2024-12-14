@@ -8,12 +8,16 @@
 
 /* Begin PBXBuildFile section */
 		C260878A2D0E28C400A464A4 /* iPhoneScreenExtenderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26087892D0E28C400A464A4 /* iPhoneScreenExtenderApp.swift */; };
-		C260878C2D0E28C400A464A4 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C260878B2D0E28C400A464A4 /* ContentView.swift */; };
 		C260878E2D0E28C600A464A4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C260878D2D0E28C600A464A4 /* Assets.xcassets */; };
 		C26087912D0E28C600A464A4 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C26087902D0E28C600A464A4 /* Preview Assets.xcassets */; };
 		C260879B2D0E28C600A464A4 /* iPhoneScreenExtenderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C260879A2D0E28C600A464A4 /* iPhoneScreenExtenderTests.swift */; };
 		C26087A52D0E28C600A464A4 /* iPhoneScreenExtenderUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26087A42D0E28C600A464A4 /* iPhoneScreenExtenderUITests.swift */; };
 		C26087A72D0E28C600A464A4 /* iPhoneScreenExtenderUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26087A62D0E28C600A464A4 /* iPhoneScreenExtenderUITestsLaunchTests.swift */; };
+		C26087B82D0E2BB000A464A4 /* H264Decoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26087B72D0E2BB000A464A4 /* H264Decoder.swift */; };
+		C26087BA2D0E2BC000A464A4 /* MetalRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26087B92D0E2BC000A464A4 /* MetalRenderer.swift */; };
+		C26087BC2D0E2BD600A464A4 /* WebSocketClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26087BB2D0E2BD600A464A4 /* WebSocketClient.swift */; };
+		C26087C32D0E2CC000A464A4 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26087C22D0E2CC000A464A4 /* ContentView.swift */; };
+		C26087C52D0E2FCF00A464A4 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C26087C42D0E2FCF00A464A4 /* Shaders.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,7 +40,6 @@
 /* Begin PBXFileReference section */
 		C26087862D0E28C400A464A4 /* iPhoneScreenExtender.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iPhoneScreenExtender.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C26087892D0E28C400A464A4 /* iPhoneScreenExtenderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneScreenExtenderApp.swift; sourceTree = "<group>"; };
-		C260878B2D0E28C400A464A4 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C260878D2D0E28C600A464A4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C26087902D0E28C600A464A4 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		C26087962D0E28C600A464A4 /* iPhoneScreenExtenderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iPhoneScreenExtenderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -44,6 +47,11 @@
 		C26087A02D0E28C600A464A4 /* iPhoneScreenExtenderUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iPhoneScreenExtenderUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C26087A42D0E28C600A464A4 /* iPhoneScreenExtenderUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneScreenExtenderUITests.swift; sourceTree = "<group>"; };
 		C26087A62D0E28C600A464A4 /* iPhoneScreenExtenderUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneScreenExtenderUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		C26087B72D0E2BB000A464A4 /* H264Decoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = H264Decoder.swift; sourceTree = "<group>"; };
+		C26087B92D0E2BC000A464A4 /* MetalRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalRenderer.swift; sourceTree = "<group>"; };
+		C26087BB2D0E2BD600A464A4 /* WebSocketClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketClient.swift; sourceTree = "<group>"; };
+		C26087C22D0E2CC000A464A4 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		C26087C42D0E2FCF00A464A4 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,8 +102,9 @@
 		C26087882D0E28C400A464A4 /* iPhoneScreenExtender */ = {
 			isa = PBXGroup;
 			children = (
+				C26087B62D0E2B9F00A464A4 /* Core */,
 				C26087892D0E28C400A464A4 /* iPhoneScreenExtenderApp.swift */,
-				C260878B2D0E28C400A464A4 /* ContentView.swift */,
+				C26087C22D0E2CC000A464A4 /* ContentView.swift */,
 				C260878D2D0E28C600A464A4 /* Assets.xcassets */,
 				C260878F2D0E28C600A464A4 /* Preview Content */,
 			);
@@ -125,6 +134,17 @@
 				C26087A62D0E28C600A464A4 /* iPhoneScreenExtenderUITestsLaunchTests.swift */,
 			);
 			path = iPhoneScreenExtenderUITests;
+			sourceTree = "<group>";
+		};
+		C26087B62D0E2B9F00A464A4 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				C26087B72D0E2BB000A464A4 /* H264Decoder.swift */,
+				C26087B92D0E2BC000A464A4 /* MetalRenderer.swift */,
+				C26087BB2D0E2BD600A464A4 /* WebSocketClient.swift */,
+				C26087C42D0E2FCF00A464A4 /* Shaders.metal */,
+			);
+			path = Core;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -257,8 +277,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C260878C2D0E28C400A464A4 /* ContentView.swift in Sources */,
+				C26087C52D0E2FCF00A464A4 /* Shaders.metal in Sources */,
+				C26087C32D0E2CC000A464A4 /* ContentView.swift in Sources */,
+				C26087BC2D0E2BD600A464A4 /* WebSocketClient.swift in Sources */,
+				C26087B82D0E2BB000A464A4 /* H264Decoder.swift in Sources */,
 				C260878A2D0E28C400A464A4 /* iPhoneScreenExtenderApp.swift in Sources */,
+				C26087BA2D0E2BC000A464A4 /* MetalRenderer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

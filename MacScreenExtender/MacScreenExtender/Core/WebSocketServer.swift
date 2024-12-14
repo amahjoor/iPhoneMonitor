@@ -24,11 +24,15 @@ class WebSocketServer {
     }
     
     private func setupListener(port: Int) {
-        let parameters = NWParameters(tls: nil)
+        print("WebSocketServer: Setting up listener on port \(port)")
+        
+        // Create parameters with explicit WebSocket support
+        let parameters = NWParameters.tcp
         parameters.allowLocalEndpointReuse = true
         
         let wsOptions = NWProtocolWebSocket.Options()
         wsOptions.autoReplyPing = true
+        wsOptions.maximumMessageSize = 1_000_000 // Allow larger messages
         parameters.defaultProtocolStack.applicationProtocols.insert(wsOptions, at: 0)
         
         do {
@@ -38,48 +42,70 @@ class WebSocketServer {
                 self?.networkQueue.async {
                     switch state {
                     case .ready:
-                        print("WebSocket server ready on port \(port)")
+                        print("WebSocketServer: Ready and listening on port \(port)")
                     case .failed(let error):
-                        print("WebSocket server failed: \(error)")
+                        print("WebSocketServer: Failed with error: \(error)")
+                    case .setup:
+                        print("WebSocketServer: Setting up...")
+                    case .waiting(let error):
+                        print("WebSocketServer: Waiting... Error: \(error)")
+                    case .cancelled:
+                        print("WebSocketServer: Cancelled")
                     default:
-                        break
+                        print("WebSocketServer: State changed to \(state)")
                     }
                 }
             }
             
             listener?.newConnectionHandler = { [weak self] connection in
+                print("WebSocketServer: New connection attempt from \(connection.endpoint)")
                 self?.networkQueue.async {
                     self?.handleNewConnection(connection)
                 }
             }
             
+            print("WebSocketServer: Starting listener...")
             listener?.start(queue: networkQueue)
         } catch {
-            print("Failed to create WebSocket server: \(error)")
+            print("WebSocketServer: Failed to create listener: \(error)")
         }
     }
     
     private func handleNewConnection(_ connection: NWConnection) {
+        print("WebSocketServer: Handling new connection from \(connection.endpoint)")
         connection.stateUpdateHandler = { [weak self] state in
             guard let self = self else { return }
             self.networkQueue.async {
                 switch state {
                 case .ready:
+                    print("WebSocketServer: Client connected successfully")
                     self.connectedClients.append(connection)
                     DispatchQueue.main.async {
                         self.onClientConnected?(connection)
                     }
-                case .failed, .cancelled:
+                case .failed(let error):
+                    print("WebSocketServer: Client connection failed: \(error)")
                     self.connectedClients.removeAll(where: { $0 === connection })
                     DispatchQueue.main.async {
                         self.onClientDisconnected?(connection)
                     }
+                case .cancelled:
+                    print("WebSocketServer: Client connection cancelled")
+                    self.connectedClients.removeAll(where: { $0 === connection })
+                    DispatchQueue.main.async {
+                        self.onClientDisconnected?(connection)
+                    }
+                case .preparing:
+                    print("WebSocketServer: Client connection preparing")
+                case .waiting(let error):
+                    print("WebSocketServer: Client connection waiting: \(error)")
                 default:
-                    break
+                    print("WebSocketServer: Client connection state changed to \(state)")
                 }
             }
         }
         
+        print("WebSocketServer: Starting client connection...")
         connection.start(queue: networkQueue)
     }
     
@@ -96,7 +122,7 @@ class WebSocketServer {
                     isComplete: true,
                     completion: .contentProcessed { error in
                         if let error = error {
-                            print("Failed to send frame: \(error)")
+                            print("WebSocketServer: Failed to send frame: \(error)")
                         }
                     }
                 )
@@ -107,6 +133,7 @@ class WebSocketServer {
     deinit {
         networkQueue.async { [weak self] in
             guard let self = self else { return }
+            print("WebSocketServer: Shutting down...")
             for client in self.connectedClients {
                 client.cancel()
             }
