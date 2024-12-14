@@ -33,6 +33,7 @@ class ScreenExtender: NSObject {
     var configuration = Configuration()
     var isStreaming: Bool = false
     var isInitialized: Bool = false
+    var onInitialized: (() -> Void)?
     
     override init() {
         super.init()
@@ -47,6 +48,9 @@ class ScreenExtender: NSObject {
         setupVideoEncoder()
         isInitialized = true
         print("ScreenExtender: Initialization complete")
+        DispatchQueue.main.async { [weak self] in
+            self?.onInitialized?()
+        }
     }
     
     private func setupWebSocketServer() {

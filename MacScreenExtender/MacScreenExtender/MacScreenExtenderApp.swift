@@ -21,9 +21,17 @@ struct MacScreenExtenderApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var screenExtender: ScreenExtender?
+    private var pendingStreamStart = false
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
+        screenExtender = ScreenExtender()
+        screenExtender?.onInitialized = { [weak self] in
+            if self?.pendingStreamStart == true {
+                self?.pendingStreamStart = false
+                self?.screenExtender?.startStreaming()
+            }
+        }
     }
     
     private func setupMenuBar() {
@@ -47,11 +55,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc private func toggleStreaming(_ sender: NSMenuItem) {
-        if screenExtender == nil {
-            screenExtender = ScreenExtender()
+        guard let screenExtender = screenExtender else { return }
+        
+        if sender.title == "Start Streaming" {
+            if screenExtender.isInitialized {
+                screenExtender.startStreaming()
+            } else {
+                pendingStreamStart = true
+            }
             sender.title = "Stop Streaming"
         } else {
-            screenExtender = nil
+            screenExtender.stopStreaming()
             sender.title = "Start Streaming"
         }
     }
