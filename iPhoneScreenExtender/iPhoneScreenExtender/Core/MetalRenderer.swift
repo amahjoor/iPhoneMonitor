@@ -94,6 +94,7 @@ class MetalRenderer: NSObject, MTKViewDelegate {
               let commandBuffer = commandQueue.makeCommandBuffer(),
               let renderPassDescriptor = view.currentRenderPassDescriptor,
               let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else {
+            print("MetalRenderer: Failed to create render resources")
             return
         }
         
@@ -101,7 +102,13 @@ class MetalRenderer: NSObject, MTKViewDelegate {
         let width = CVPixelBufferGetWidth(pixelBuffer)
         let height = CVPixelBufferGetHeight(pixelBuffer)
         
-        CVMetalTextureCacheCreateTextureFromImage(
+        // Validate dimensions
+        guard width > 0, height > 0 else {
+            print("MetalRenderer: Invalid pixel buffer dimensions")
+            return
+        }
+        
+        let status = CVMetalTextureCacheCreateTextureFromImage(
             kCFAllocatorDefault,
             textureCache,
             pixelBuffer,
@@ -113,9 +120,17 @@ class MetalRenderer: NSObject, MTKViewDelegate {
             &texture
         )
         
-        guard let metalTexture = texture,
+        guard status == kCVReturnSuccess,
+              let metalTexture = texture,
               let textureRef = CVMetalTextureGetTexture(metalTexture) else {
+            print("MetalRenderer: Failed to create Metal texture")
             return
+        }
+        
+        // Lock pixel buffer for reading
+        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
+        defer {
+            CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly)
         }
         
         renderEncoder.setRenderPipelineState(pipelineState)

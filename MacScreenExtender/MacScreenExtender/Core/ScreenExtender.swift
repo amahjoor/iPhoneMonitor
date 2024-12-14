@@ -13,6 +13,12 @@ import Foundation
 import ScreenCaptureKit
 import AVFoundation
 import CoreGraphics
+import CoreMedia
+import Network
+
+enum ScreenExtenderError: Error {
+    case noDisplaysFound
+}
 
 class ScreenExtender: NSObject {
     private var stream: SCStream?
@@ -82,21 +88,17 @@ class ScreenExtender: NSObject {
     
     private func setupScreenCapture() async throws {
         print("ScreenExtender: Setting up screen capture...")
-        // Request screen capture permission
-        let content = try await SCShareableContent.current
-        guard !content.displays.isEmpty else {
-            print("ScreenExtender: No displays available")
-            throw NSError(domain: "ScreenExtender", code: -1, userInfo: [NSLocalizedDescriptionKey: "No displays available"])
-        }
         
-        print("ScreenExtender: Found \(content.displays.count) displays")
-        // Get available displays
-        guard let display = content.displays.first(where: { $0.displayID == configuration.displayID }) else {
-            print("ScreenExtender: Selected display not found")
-            throw NSError(domain: "ScreenExtender", code: -2, userInfo: [NSLocalizedDescriptionKey: "Selected display not found"])
+        // Get shareable content
+        let content = try await SCShareableContent.current
+        
+        // Get the main display
+        guard let display = content.displays.first else {
+            throw ScreenExtenderError.noDisplaysFound
         }
         
         print("ScreenExtender: Using display: \(display.displayID)")
+        
         // Create filter for the display
         let filter = SCContentFilter(display: display, excludingWindows: [])
         
@@ -114,8 +116,12 @@ class ScreenExtender: NSObject {
         print("ScreenExtender: Stream created")
         
         // Add stream output
-        try await stream?.addStreamOutput(self, type: .screen, sampleHandlerQueue: DispatchQueue.global(qos: .userInteractive))
-        print("ScreenExtender: Stream output added")
+        if let stream = stream {
+            try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: DispatchQueue.global(qos: .userInteractive))
+            print("ScreenExtender: Stream output added")
+        } else {
+            throw ScreenExtenderError.noDisplaysFound
+        }
     }
     
     func startStreaming() {
