@@ -8,117 +8,115 @@ class H264Decoder {
     private var formatDescription: CMVideoFormatDescription?
     var onDecodedFrame: ((CVPixelBuffer) -> Void)?
     
+    private var sps: Data?
+    private var pps: Data?
+    
     init() {
         setupDecoder()
     }
     
     private func setupDecoder() {
         // We'll create the actual session when we receive the first frame with SPS and PPS
-        // No need to set up parameters here since they'll be used in createSessionIfNeeded
+        print("H264Decoder: Waiting for SPS and PPS")
     }
     
     func decode(_ data: Data) {
-        // Check if this is a keyframe (contains SPS and PPS)
-        if data.count > 4 && isKeyframe(data) {
-            createSessionIfNeeded(with: data)
-        }
+        // Extract NAL units from the data
+        let nalUnits = extractNALUnits(from: data)
         
-        guard let session = session else { return }
-        
-        var blockBuffer: CMBlockBuffer?
-        let result = CMBlockBufferCreateWithMemoryBlock(
-            allocator: kCFAllocatorDefault,
-            memoryBlock: nil,
-            blockLength: data.count,
-            blockAllocator: nil,
-            customBlockSource: nil,
-            offsetToData: 0,
-            dataLength: data.count,
-            flags: 0,
-            blockBufferOut: &blockBuffer
-        )
-        
-        guard result == kCMBlockBufferNoErr,
-              let blockBuffer = blockBuffer else { return }
-        
-        let _ = data.withUnsafeBytes { buffer in
-            CMBlockBufferReplaceDataBytes(
-                with: buffer.baseAddress!,
-                blockBuffer: blockBuffer,
-                offsetIntoDestination: 0,
-                dataLength: data.count
-            )
-        }
-        
-        var sampleBuffer: CMSampleBuffer?
-        var timingInfo = CMSampleTimingInfo(
-            duration: CMTime(value: 1, timescale: 30),
-            presentationTimeStamp: CMTime(value: 0, timescale: 1),
-            decodeTimeStamp: CMTime.invalid
-        )
-        
-        CMSampleBufferCreateReady(
-            allocator: kCFAllocatorDefault,
-            dataBuffer: blockBuffer,
-            formatDescription: formatDescription,
-            sampleCount: 1,
-            sampleTimingEntryCount: 1,
-            sampleTimingArray: &timingInfo,
-            sampleSizeEntryCount: 0,
-            sampleSizeArray: nil,
-            sampleBufferOut: &sampleBuffer
-        )
-        
-        if let sampleBuffer = sampleBuffer {
-            let flags: VTDecodeFrameFlags = VTDecodeFrameFlags(rawValue: 1)
-            VTDecompressionSessionDecodeFrame(
-                session,
-                sampleBuffer: sampleBuffer,
-                flags: flags,
-                frameRefcon: nil,
-                infoFlagsOut: nil
-            )
+        for nalUnit in nalUnits {
+            let nalType = nalUnit[0] & 0x1F
+            print("H264Decoder: Processing NAL unit type \(nalType)")
+            
+            switch nalType {
+            case 7: // SPS
+                print("H264Decoder: Found SPS NAL unit (\(nalUnit.count) bytes)")
+                sps = nalUnit
+            case 8: // PPS
+                print("H264Decoder: Found PPS NAL unit (\(nalUnit.count) bytes)")
+                pps = nalUnit
+            case 5: // IDR Frame
+                print("H264Decoder: Found IDR frame")
+                if session == nil {
+                    createDecoderSessionIfNeeded()
+                }
+                decodeFrame(nalUnit)
+            default:
+                if session != nil {
+                    decodeFrame(nalUnit)
+                }
+            }
         }
     }
     
-    private func isKeyframe(_ data: Data) -> Bool {
-        // Simple check for NAL unit type 7 (SPS) or 8 (PPS)
-        if data.count > 4 {
-            let nalUnitType = data[4] & 0x1F
-            return nalUnitType == 7 || nalUnitType == 8
-        }
-        return false
-    }
-    
-    private func createSessionIfNeeded(with keyframeData: Data) {
-        // Parse SPS and PPS from keyframe
-        var parameterSets: [Data] = []
+    private func extractNALUnits(from data: Data) -> [Data] {
+        var nalUnits: [Data] = []
         var currentIndex = 0
         
-        while currentIndex < keyframeData.count - 4 {
-            if keyframeData[currentIndex..<currentIndex+4] == Data([0x00, 0x00, 0x00, 0x01]) {
-                let nalUnitType = keyframeData[currentIndex + 4] & 0x1F
-                if nalUnitType == 7 || nalUnitType == 8 { // SPS or PPS
-                    var nextStartIndex = currentIndex + 4
-                    while nextStartIndex < keyframeData.count - 4 {
-                        if keyframeData[nextStartIndex..<nextStartIndex+4] == Data([0x00, 0x00, 0x00, 0x01]) {
-                            break
-                        }
-                        nextStartIndex += 1
+        // Look for NAL unit start codes (0x00 0x00 0x00 0x01 or 0x00 0x00 0x01)
+        while currentIndex < data.count {
+            var startCodeLength = 0
+            var nextStartCodeIndex = data.count
+            
+            // Find start code
+            if currentIndex + 4 <= data.count &&
+                data[currentIndex] == 0x00 &&
+                data[currentIndex + 1] == 0x00 &&
+                data[currentIndex + 2] == 0x00 &&
+                data[currentIndex + 3] == 0x01 {
+                startCodeLength = 4
+            } else if currentIndex + 3 <= data.count &&
+                data[currentIndex] == 0x00 &&
+                data[currentIndex + 1] == 0x00 &&
+                data[currentIndex + 2] == 0x01 {
+                startCodeLength = 3
+            }
+            
+            if startCodeLength > 0 {
+                // Look for next start code
+                var searchIndex = currentIndex + startCodeLength
+                while searchIndex + 3 < data.count {
+                    if (data[searchIndex] == 0x00 &&
+                        data[searchIndex + 1] == 0x00 &&
+                        data[searchIndex + 2] == 0x00 &&
+                        data[searchIndex + 3] == 0x01) ||
+                        (data[searchIndex] == 0x00 &&
+                         data[searchIndex + 1] == 0x00 &&
+                         data[searchIndex + 2] == 0x01) {
+                        nextStartCodeIndex = searchIndex
+                        break
                     }
-                    let parameterSet = keyframeData[currentIndex+4..<nextStartIndex]
-                    parameterSets.append(Data(parameterSet))
+                    searchIndex += 1
                 }
-                currentIndex = currentIndex + 4
+                
+                // Extract NAL unit
+                let nalStartIndex = currentIndex + startCodeLength
+                let nalUnit = data.subdata(in: nalStartIndex..<nextStartCodeIndex)
+                if !nalUnit.isEmpty {
+                    nalUnits.append(nalUnit)
+                }
+                
+                currentIndex = nextStartCodeIndex
             } else {
                 currentIndex += 1
             }
         }
         
-        guard parameterSets.count >= 2 else { return }
+        print("H264Decoder: Found \(nalUnits.count) NAL units")
+        return nalUnits
+    }
+    
+    private func createDecoderSessionIfNeeded() {
+        guard let sps = sps, let pps = pps else {
+            print("H264Decoder: Missing SPS or PPS")
+            return
+        }
+        
+        print("H264Decoder: Creating decoder session with SPS and PPS")
         
         // Create format description
         var formatDescription: CMFormatDescription?
+        let parameterSets = [sps, pps]
         let parameterSetPointers: [UnsafePointer<UInt8>] = parameterSets.map { $0.withUnsafeBytes { $0.baseAddress!.assumingMemoryBound(to: UInt8.self) } }
         let parameterSetSizes: [Int] = parameterSets.map { $0.count }
         
@@ -131,8 +129,10 @@ class H264Decoder {
             formatDescriptionOut: &formatDescription
         )
         
-        guard status == noErr,
-              let formatDescription = formatDescription else { return }
+        guard status == noErr, let formatDescription = formatDescription else {
+            print("H264Decoder: Failed to create format description, status: \(status)")
+            return
+        }
         
         self.formatDescription = formatDescription
         
@@ -147,7 +147,7 @@ class H264Decoder {
             decompressionOutputRefCon: UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
         )
         
-        VTDecompressionSessionCreate(
+        let decompressStatus = VTDecompressionSessionCreate(
             allocator: kCFAllocatorDefault,
             formatDescription: formatDescription,
             decoderSpecification: nil,
@@ -155,6 +155,87 @@ class H264Decoder {
             outputCallback: &callback,
             decompressionSessionOut: &session
         )
+        
+        if decompressStatus == noErr {
+            print("H264Decoder: Created decompression session successfully")
+        } else {
+            print("H264Decoder: Failed to create decompression session, status: \(decompressStatus)")
+        }
+    }
+    
+    private func decodeFrame(_ nalUnit: Data) {
+        guard let session = session,
+              let formatDescription = formatDescription else {
+            print("H264Decoder: No valid session for decoding")
+            return
+        }
+        
+        var blockBuffer: CMBlockBuffer?
+        let result = CMBlockBufferCreateWithMemoryBlock(
+            allocator: kCFAllocatorDefault,
+            memoryBlock: nil,
+            blockLength: nalUnit.count,
+            blockAllocator: nil,
+            customBlockSource: nil,
+            offsetToData: 0,
+            dataLength: nalUnit.count,
+            flags: 0,
+            blockBufferOut: &blockBuffer
+        )
+        
+        guard result == kCMBlockBufferNoErr,
+              let blockBuffer = blockBuffer else {
+            print("H264Decoder: Failed to create block buffer")
+            return
+        }
+        
+        let _ = nalUnit.withUnsafeBytes { buffer in
+            CMBlockBufferReplaceDataBytes(
+                with: buffer.baseAddress!,
+                blockBuffer: blockBuffer,
+                offsetIntoDestination: 0,
+                dataLength: nalUnit.count
+            )
+        }
+        
+        var sampleBuffer: CMSampleBuffer?
+        var timingInfo = CMSampleTimingInfo(
+            duration: CMTime(value: 1, timescale: 30),
+            presentationTimeStamp: CMTime(value: 0, timescale: 1),
+            decodeTimeStamp: CMTime.invalid
+        )
+        
+        let status = CMSampleBufferCreateReady(
+            allocator: kCFAllocatorDefault,
+            dataBuffer: blockBuffer,
+            formatDescription: formatDescription,
+            sampleCount: 1,
+            sampleTimingEntryCount: 1,
+            sampleTimingArray: &timingInfo,
+            sampleSizeEntryCount: 0,
+            sampleSizeArray: nil,
+            sampleBufferOut: &sampleBuffer
+        )
+        
+        if status != noErr {
+            print("H264Decoder: Failed to create sample buffer, status: \(status)")
+            return
+        }
+        
+        if let sampleBuffer = sampleBuffer {
+            let flags = VTDecodeFrameFlags(rawValue: 1)
+            let decodeStatus = VTDecompressionSessionDecodeFrame(
+                session,
+                sampleBuffer: sampleBuffer,
+                flags: flags,
+                frameRefcon: nil,
+                infoFlagsOut: nil
+            )
+            
+            if decodeStatus != noErr {
+                print("H264Decoder: Failed to decode frame, status: \(decodeStatus)")
+            }
+        }
     }
     
     func invalidateSession() {
@@ -162,6 +243,9 @@ class H264Decoder {
             VTDecompressionSessionInvalidate(session)
             self.session = nil
         }
+        self.formatDescription = nil
+        self.sps = nil
+        self.pps = nil
     }
     
     deinit {

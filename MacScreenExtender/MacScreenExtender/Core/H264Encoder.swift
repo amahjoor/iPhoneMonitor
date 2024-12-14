@@ -11,6 +11,36 @@ import Foundation
 import VideoToolbox
 import CoreMedia
 import QuartzCore
+import CoreVideo
+
+// Add CVPixelBuffer extension
+extension CVPixelBuffer {
+    static func create(width: Int, height: Int) -> CVPixelBuffer? {
+        var pixelBuffer: CVPixelBuffer?
+        let attributes = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+            kCVPixelBufferWidthKey as String: width,
+            kCVPixelBufferHeightKey as String: height,
+            kCVPixelBufferMetalCompatibilityKey as String: true
+        ] as [String: Any]
+        
+        let status = CVPixelBufferCreate(
+            kCFAllocatorDefault,
+            width,
+            height,
+            kCVPixelFormatType_32BGRA,
+            attributes as CFDictionary,
+            &pixelBuffer
+        )
+        
+        guard status == kCVReturnSuccess else {
+            print("Failed to create pixel buffer: \(status)")
+            return nil
+        }
+        
+        return pixelBuffer
+    }
+}
 
 enum H264EncoderError: Error {
     case sessionCreationFailed
@@ -31,10 +61,13 @@ enum H264EncoderError: Error {
 
 class H264Encoder {
     private var session: VTCompressionSession?
+    private var formatDescription: CMFormatDescription?
     private let width: Int
     private let height: Int
     private let bitRate: Int
     private let frameRate: Int
+    internal var sps: Data?
+    internal var pps: Data?
     var onEncodedFrame: ((Data) -> Void)?
     
     init(width: Int = 1920, height: Int = 1080, bitRate: Int = 5_000_000, frameRate: Int = 60) {
@@ -72,47 +105,177 @@ class H264Encoder {
         )
         
         guard status == noErr, let session = session else {
-            print("Failed to create compression session with status: \(status)")
+            print("H264Encoder: Failed to create compression session with status: \(status)")
             return
         }
         
-        // Configure encoder settings for low latency
+        // Configure encoder settings for low latency and reliable keyframes
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_RealTime, value: kCFBooleanTrue)
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ProfileLevel, value: kVTProfileLevel_H264_High_AutoLevel)
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AllowFrameReordering, value: kCFBooleanFalse)
-        VTSessionSetProperty(session, key: kVTCompressionPropertyKey_MaxKeyFrameInterval, value: NSNumber(value: frameRate))
+        VTSessionSetProperty(session, key: kVTCompressionPropertyKey_MaxKeyFrameInterval, value: NSNumber(value: 30))
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ExpectedFrameRate, value: NSNumber(value: frameRate))
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AverageBitRate, value: NSNumber(value: bitRate))
         VTSessionSetProperty(session, key: kVTCompressionPropertyKey_DataRateLimits, value: [bitRate / 8, 1] as CFArray)
         
-        // Enable B-frames for better compression
-        VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AllowTemporalCompression, value: kCFBooleanTrue)
+        // Force keyframe every 1 second
+        VTSessionSetProperty(session, key: kVTCompressionPropertyKey_MaxKeyFrameIntervalDuration, value: NSNumber(value: 1))
         
-        // Set encoding quality
-        VTSessionSetProperty(session, key: kVTCompressionPropertyKey_Quality, value: NSNumber(value: 0.7))
+        // Set H.264 specific properties
+        VTSessionSetProperty(session, key: kVTCompressionPropertyKey_H264EntropyMode, value: kVTH264EntropyMode_CABAC)
         
+        // Ensure clean aperture and pixel aspect ratio are set
+        let cleanAperture = [
+            kCVImageBufferCleanApertureWidthKey: width,
+            kCVImageBufferCleanApertureHeightKey: height,
+            kCVImageBufferCleanApertureHorizontalOffsetKey: 0,
+            kCVImageBufferCleanApertureVerticalOffsetKey: 0
+        ] as CFDictionary
+        VTSessionSetProperty(session, key: kVTCompressionPropertyKey_CleanAperture, value: cleanAperture)
+        
+        let pixelAspectRatio = [
+            kCVImageBufferPixelAspectRatioHorizontalSpacingKey: 1,
+            kCVImageBufferPixelAspectRatioVerticalSpacingKey: 1
+        ] as CFDictionary
+        VTSessionSetProperty(session, key: kVTCompressionPropertyKey_PixelAspectRatio, value: pixelAspectRatio)
+        
+        // Request keyframe for first frame and get parameter sets
+        forceNextKeyframe = true
+        frameCount = 0
+        
+        // Prepare session and get format description
         VTCompressionSessionPrepareToEncodeFrames(session)
+        
+        // Get format description directly from the session
+        guard let pixelBuffer = CVPixelBuffer.create(width: width, height: height) else {
+            print("H264Encoder: Failed to create pixel buffer for format description")
+            return
+        }
+        
+        var formatDesc: CMFormatDescription?
+        let status4 = CMVideoFormatDescriptionCreateForImageBuffer(
+            allocator: kCFAllocatorDefault,
+            imageBuffer: pixelBuffer,
+            formatDescriptionOut: &formatDesc
+        )
+        
+        guard status4 == noErr, let formatDescription = formatDesc else {
+            print("H264Encoder: Failed to create format description, status: \(status4)")
+            return
+        }
+        
+        self.formatDescription = formatDescription
+        
+        // Get SPS and PPS
+        var spsCount: Int = 0
+        var spsSize: Int = 0
+        var ppsCount: Int = 0
+        var ppsSize: Int = 0
+        
+        let status2 = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
+            formatDescription,
+            parameterSetIndex: 0,
+            parameterSetPointerOut: nil,
+            parameterSetSizeOut: &spsSize,
+            parameterSetCountOut: &spsCount,
+            nalUnitHeaderLengthOut: nil
+        )
+        
+        let status3 = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
+            formatDescription,
+            parameterSetIndex: 1,
+            parameterSetPointerOut: nil,
+            parameterSetSizeOut: &ppsSize,
+            parameterSetCountOut: &ppsCount,
+            nalUnitHeaderLengthOut: nil
+        )
+        
+        if status2 == noErr && status3 == noErr {
+            var spsBytes = [UInt8](repeating: 0, count: spsSize)
+            var ppsBytes = [UInt8](repeating: 0, count: ppsSize)
+            var spsPointer: UnsafePointer<UInt8>?
+            var ppsPointer: UnsafePointer<UInt8>?
+            
+            CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
+                formatDescription,
+                parameterSetIndex: 0,
+                parameterSetPointerOut: &spsPointer,
+                parameterSetSizeOut: nil,
+                parameterSetCountOut: nil,
+                nalUnitHeaderLengthOut: nil
+            )
+            
+            CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
+                formatDescription,
+                parameterSetIndex: 1,
+                parameterSetPointerOut: &ppsPointer,
+                parameterSetSizeOut: nil,
+                parameterSetCountOut: nil,
+                nalUnitHeaderLengthOut: nil
+            )
+            
+            if let spsPointer = spsPointer, let ppsPointer = ppsPointer {
+                spsBytes.withUnsafeMutableBufferPointer { buffer in
+                    buffer.baseAddress?.initialize(from: spsPointer, count: spsSize)
+                }
+                ppsBytes.withUnsafeMutableBufferPointer { buffer in
+                    buffer.baseAddress?.initialize(from: ppsPointer, count: ppsSize)
+                }
+                
+                // Store SPS and PPS with start codes
+                let startCode = Data([0x00, 0x00, 0x00, 0x01])
+                self.sps = startCode + Data(spsBytes)
+                self.pps = startCode + Data(ppsBytes)
+                print("H264Encoder: Got SPS (\(spsSize) bytes) and PPS (\(ppsSize) bytes)")
+            }
+        }
+        
+        print("H264Encoder: Encoder setup complete")
     }
+    
+    private var forceNextKeyframe = true
+    private var frameCount = 0
+    private let keyframeInterval = 60 // Force keyframe every 60 frames
     
     func encode(_ pixelBuffer: CVPixelBuffer) {
         guard let session = session else { return }
         
+        frameCount += 1
+        if frameCount >= keyframeInterval {
+            forceNextKeyframe = true
+            frameCount = 0
+            print("H264Encoder: Forcing keyframe due to interval")
+        }
+        
         let presentationTimeStamp = CMTime(seconds: CACurrentMediaTime(), preferredTimescale: CMTimeScale(frameRate * 2))
         let duration = CMTime(value: 1, timescale: CMTimeScale(frameRate))
+        
+        var frameProperties: [String: Any] = [:]
+        if forceNextKeyframe {
+            frameProperties[kVTEncodeFrameOptionKey_ForceKeyFrame as String] = kCFBooleanTrue
+            print("H264Encoder: Forcing keyframe")
+            forceNextKeyframe = false
+        }
         
         let status = VTCompressionSessionEncodeFrame(
             session,
             imageBuffer: pixelBuffer,
             presentationTimeStamp: presentationTimeStamp,
             duration: duration,
-            frameProperties: nil,
+            frameProperties: frameProperties as CFDictionary,
             sourceFrameRefcon: nil,
             infoFlagsOut: nil
         )
         
         if status != noErr {
-            print("Encoding failed with status: \(status)")
+            print("H264Encoder: Encoding failed with status: \(status)")
+            forceNextKeyframe = true
         }
+    }
+    
+    internal func packageNALUnit(_ data: Data) -> Data {
+        let startCode = Data([0x00, 0x00, 0x00, 0x01])
+        return startCode + data
     }
     
     func invalidateSession() {
@@ -155,9 +318,22 @@ private func compressCallback(
     guard blockBufferStatus == kCMBlockBufferNoErr,
           let pointer = dataPointer else { return }
     
-    let data = Data(bytes: pointer, count: length)
+    var nalData = Data(bytes: pointer, count: length)
+    
+    // Check if this is a keyframe
+    if let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false) as? [[CFString: Any]],
+       let notSync = attachments.first?[kCMSampleAttachmentKey_NotSync] as? Bool,
+       !notSync {
+        print("H264Encoder: Sending keyframe with SPS/PPS")
+        // For keyframes, prepend SPS and PPS
+        if let sps = encoder.sps, let pps = encoder.pps {
+            nalData = sps + pps + encoder.packageNALUnit(nalData)
+        }
+    } else {
+        nalData = encoder.packageNALUnit(nalData)
+    }
     
     DispatchQueue.main.async {
-        encoder.onEncodedFrame?(data)
+        encoder.onEncodedFrame?(nalData)
     }
 }
