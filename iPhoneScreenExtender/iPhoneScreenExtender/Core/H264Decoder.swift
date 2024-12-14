@@ -26,15 +26,18 @@ class H264Decoder {
         
         for nalUnit in nalUnits {
             let nalType = nalUnit[0] & 0x1F
-            print("H264Decoder: Processing NAL unit type \(nalType)")
+            let nalTypeName = getNALUnitTypeName(nalType)
+            print("H264Decoder: Processing NAL unit type \(nalType) (\(nalTypeName)) size: \(nalUnit.count) bytes")
             
             switch nalType {
             case 7: // SPS
                 print("H264Decoder: Found SPS NAL unit (\(nalUnit.count) bytes)")
                 sps = nalUnit
+                print("H264Decoder: SPS data: \(nalUnit.map { String(format: "%02X", $0) }.joined())")
             case 8: // PPS
                 print("H264Decoder: Found PPS NAL unit (\(nalUnit.count) bytes)")
                 pps = nalUnit
+                print("H264Decoder: PPS data: \(nalUnit.map { String(format: "%02X", $0) }.joined())")
             case 5: // IDR Frame
                 print("H264Decoder: Found IDR frame")
                 if session == nil {
@@ -89,20 +92,23 @@ class H264Decoder {
                     searchIndex += 1
                 }
                 
-                // Extract NAL unit
-                let nalStartIndex = currentIndex + startCodeLength
-                let nalUnit = data.subdata(in: nalStartIndex..<nextStartCodeIndex)
-                if !nalUnit.isEmpty {
+                // Extract NAL unit including start code
+                let nalUnit = data.subdata(in: currentIndex..<nextStartCodeIndex)
+                if nalUnit.count > startCodeLength {
                     nalUnits.append(nalUnit)
                 }
                 
                 currentIndex = nextStartCodeIndex
             } else {
-                currentIndex += 1
+                // If no start code found at current position, treat entire remaining data as one NAL unit
+                if currentIndex == 0 {
+                    let startCode = Data([0x00, 0x00, 0x00, 0x01])
+                    nalUnits.append(startCode + data)
+                }
+                break
             }
         }
         
-        print("H264Decoder: Found \(nalUnits.count) NAL units")
         return nalUnits
     }
     
@@ -114,9 +120,14 @@ class H264Decoder {
         
         print("H264Decoder: Creating decoder session with SPS and PPS")
         
+        // Add NAL start code if not present
+        let startCode = Data([0x00, 0x00, 0x00, 0x01])
+        let spsWithStartCode = sps.starts(with: startCode) ? sps : startCode + sps
+        let ppsWithStartCode = pps.starts(with: startCode) ? pps : startCode + pps
+        
         // Create format description
         var formatDescription: CMFormatDescription?
-        let parameterSets = [sps, pps]
+        let parameterSets = [spsWithStartCode, ppsWithStartCode]
         let parameterSetPointers: [UnsafePointer<UInt8>] = parameterSets.map { $0.withUnsafeBytes { $0.baseAddress!.assumingMemoryBound(to: UInt8.self) } }
         let parameterSetSizes: [Int] = parameterSets.map { $0.count }
         
@@ -136,11 +147,14 @@ class H264Decoder {
         
         self.formatDescription = formatDescription
         
-        // Create decompression session
+        // Create decompression session with hardware acceleration
         let decoderParameters = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
-            kCVPixelBufferMetalCompatibilityKey as String: true
-        ] as CFDictionary
+            kCVPixelBufferMetalCompatibilityKey as String: true,
+            kCVPixelBufferWidthKey as String: 1920,
+            kCVPixelBufferHeightKey as String: 1080,
+            kCVPixelBufferIOSurfacePropertiesKey as String: [:],
+        ] as [String: Any]
         
         var callback = VTDecompressionOutputCallbackRecord(
             decompressionOutputCallback: decompressionCallback,
@@ -150,14 +164,24 @@ class H264Decoder {
         let decompressStatus = VTDecompressionSessionCreate(
             allocator: kCFAllocatorDefault,
             formatDescription: formatDescription,
-            decoderSpecification: nil,
-            imageBufferAttributes: decoderParameters,
+            decoderSpecification: [
+                kVTVideoDecoderSpecification_EnableHardwareAcceleratedVideoDecoder as String: true,
+                kVTVideoDecoderSpecification_RequireHardwareAcceleratedVideoDecoder as String: true
+            ] as CFDictionary,
+            imageBufferAttributes: decoderParameters as CFDictionary,
             outputCallback: &callback,
             decompressionSessionOut: &session
         )
         
         if decompressStatus == noErr {
             print("H264Decoder: Created decompression session successfully")
+            
+            // Configure decoder for low latency
+            if let session = session {
+                VTSessionSetProperty(session, key: kVTDecompressionPropertyKey_RealTime, value: kCFBooleanTrue)
+                VTSessionSetProperty(session, key: kVTDecompressionPropertyKey_ThreadCount, value: NSNumber(value: 1))
+                VTSessionSetProperty(session, key: kVTDecompressionPropertyKey_MaximizePowerEfficiency, value: kCFBooleanFalse)
+            }
         } else {
             print("H264Decoder: Failed to create decompression session, status: \(decompressStatus)")
         }
@@ -170,15 +194,19 @@ class H264Decoder {
             return
         }
         
+        // Ensure NAL unit has start code
+        let startCode = Data([0x00, 0x00, 0x00, 0x01])
+        let nalUnitWithStartCode = nalUnit.starts(with: startCode) ? nalUnit : startCode + nalUnit
+        
         var blockBuffer: CMBlockBuffer?
         let result = CMBlockBufferCreateWithMemoryBlock(
             allocator: kCFAllocatorDefault,
             memoryBlock: nil,
-            blockLength: nalUnit.count,
+            blockLength: nalUnitWithStartCode.count,
             blockAllocator: nil,
             customBlockSource: nil,
             offsetToData: 0,
-            dataLength: nalUnit.count,
+            dataLength: nalUnitWithStartCode.count,
             flags: 0,
             blockBufferOut: &blockBuffer
         )
@@ -189,18 +217,18 @@ class H264Decoder {
             return
         }
         
-        let _ = nalUnit.withUnsafeBytes { buffer in
+        let _ = nalUnitWithStartCode.withUnsafeBytes { buffer in
             CMBlockBufferReplaceDataBytes(
                 with: buffer.baseAddress!,
                 blockBuffer: blockBuffer,
                 offsetIntoDestination: 0,
-                dataLength: nalUnit.count
+                dataLength: nalUnitWithStartCode.count
             )
         }
         
         var sampleBuffer: CMSampleBuffer?
         var timingInfo = CMSampleTimingInfo(
-            duration: CMTime(value: 1, timescale: 30),
+            duration: CMTime(value: 1, timescale: 60),  // Assuming 60 FPS
             presentationTimeStamp: CMTime(value: 0, timescale: 1),
             decodeTimeStamp: CMTime.invalid
         )
@@ -223,7 +251,7 @@ class H264Decoder {
         }
         
         if let sampleBuffer = sampleBuffer {
-            let flags = VTDecodeFrameFlags(rawValue: 1)
+            let flags = VTDecodeFrameFlags._EnableAsynchronousDecompression
             let decodeStatus = VTDecompressionSessionDecodeFrame(
                 session,
                 sampleBuffer: sampleBuffer,
@@ -234,6 +262,13 @@ class H264Decoder {
             
             if decodeStatus != noErr {
                 print("H264Decoder: Failed to decode frame, status: \(decodeStatus)")
+                
+                // If decoding fails, try to recreate the session
+                if decodeStatus == kVTInvalidSessionErr {
+                    print("H264Decoder: Invalid session, attempting to recreate")
+                    invalidateSession()
+                    createDecoderSessionIfNeeded()
+                }
             }
         }
     }
@@ -250,6 +285,44 @@ class H264Decoder {
     
     deinit {
         invalidateSession()
+    }
+    
+    private func getNALUnitTypeName(_ type: UInt8) -> String {
+        switch type {
+        case 0: return "Unspecified"
+        case 1: return "Coded slice"
+        case 2: return "Coded slice data partition A"
+        case 3: return "Coded slice data partition B"
+        case 4: return "Coded slice data partition C"
+        case 5: return "IDR"
+        case 6: return "SEI"
+        case 7: return "SPS"
+        case 8: return "PPS"
+        case 9: return "Access unit delimiter"
+        case 10: return "End of sequence"
+        case 11: return "End of stream"
+        case 12: return "Filler data"
+        case 13: return "Sequence parameter set extension"
+        case 14: return "Prefix NAL unit"
+        case 15: return "Subset sequence parameter set"
+        case 16: return "Reserved"
+        case 17: return "Reserved"
+        case 18: return "Reserved"
+        case 19: return "Coded slice of an auxiliary coded picture"
+        case 20: return "Coded slice extension"
+        case 21: return "Coded slice extension for depth view"
+        case 22: return "Reserved"
+        case 23: return "Reserved"
+        case 24: return "Unspecified"
+        case 25: return "Unspecified"
+        case 26: return "Unspecified"
+        case 27: return "Unspecified"
+        case 28: return "Unspecified"
+        case 29: return "Unspecified"
+        case 30: return "Unspecified"
+        case 31: return "Unspecified"
+        default: return "Unknown"
+        }
     }
 }
 
