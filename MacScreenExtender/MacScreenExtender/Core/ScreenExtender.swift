@@ -12,87 +12,187 @@
 import Foundation
 import ScreenCaptureKit
 import AVFoundation
+import CoreGraphics
 
 class ScreenExtender: NSObject {
     private var stream: SCStream?
     private var webSocketServer: WebSocketServer?
     private var videoEncoder: H264Encoder?
     private let port: Int = 8080
+    private let setupQueue = DispatchQueue(label: "com.arman.macscreenextender.setup", qos: .userInitiated)
+    
+    // Configuration
+    struct Configuration {
+        var width: Int = 1920
+        var height: Int = 1080
+        var frameRate: Int = 60
+        var bitRate: Int = 5_000_000
+        var displayID: CGDirectDisplayID = CGMainDisplayID()
+    }
+    
+    var configuration = Configuration()
+    var isStreaming: Bool = false
+    var isInitialized: Bool = false
     
     override init() {
         super.init()
+        print("ScreenExtender: Initializing...")
+        setupQueue.async { [weak self] in
+            self?.setupComponents()
+        }
+    }
+    
+    private func setupComponents() {
         setupWebSocketServer()
         setupVideoEncoder()
-        setupScreenCapture()
+        isInitialized = true
+        print("ScreenExtender: Initialization complete")
     }
     
     private func setupWebSocketServer() {
+        print("ScreenExtender: Setting up WebSocket server on port \(port)")
         webSocketServer = WebSocketServer(port: port)
-        webSocketServer?.onClientConnected = { [weak self] client in
-            print("iPhone client connected")
+        webSocketServer?.onClientConnected = { [weak self] _ in
+            print("ScreenExtender: iPhone client connected")
             self?.startStreaming()
+        }
+        
+        webSocketServer?.onClientDisconnected = { [weak self] _ in
+            print("ScreenExtender: iPhone client disconnected")
+            self?.stopStreaming()
         }
     }
     
     private func setupVideoEncoder() {
-        videoEncoder = H264Encoder()
+        print("ScreenExtender: Setting up H264 encoder (\(configuration.width)x\(configuration.height) @ \(configuration.frameRate)fps)")
+        videoEncoder = H264Encoder(width: configuration.width,
+                                 height: configuration.height,
+                                 bitRate: configuration.bitRate,
+                                 frameRate: configuration.frameRate)
+        
         videoEncoder?.onEncodedFrame = { [weak self] encodedData in
+            print("ScreenExtender: Encoded frame: \(encodedData.count) bytes")
             self?.webSocketServer?.broadcast(data: encodedData)
         }
     }
     
-    private func setupScreenCapture() {
+    private func setupScreenCapture() async throws {
+        print("ScreenExtender: Setting up screen capture...")
+        // Request screen capture permission
+        let content = try await SCShareableContent.current
+        guard !content.displays.isEmpty else {
+            print("ScreenExtender: No displays available")
+            throw NSError(domain: "ScreenExtender", code: -1, userInfo: [NSLocalizedDescriptionKey: "No displays available"])
+        }
+        
+        print("ScreenExtender: Found \(content.displays.count) displays")
+        // Get available displays
+        guard let display = content.displays.first(where: { $0.displayID == configuration.displayID }) else {
+            print("ScreenExtender: Selected display not found")
+            throw NSError(domain: "ScreenExtender", code: -2, userInfo: [NSLocalizedDescriptionKey: "Selected display not found"])
+        }
+        
+        print("ScreenExtender: Using display: \(display.displayID)")
+        // Create filter for the display
+        let filter = SCContentFilter(display: display, excludingWindows: [])
+        
+        // Configure stream
+        let streamConfig = SCStreamConfiguration()
+        streamConfig.width = configuration.width
+        streamConfig.height = configuration.height
+        streamConfig.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(configuration.frameRate))
+        streamConfig.pixelFormat = kCVPixelFormatType_32BGRA
+        streamConfig.queueDepth = 5
+        streamConfig.showsCursor = true
+        
+        // Create stream
+        stream = SCStream(filter: filter, configuration: streamConfig, delegate: self)
+        print("ScreenExtender: Stream created")
+        
+        // Add stream output
+        try await stream?.addStreamOutput(self, type: .screen, sampleHandlerQueue: DispatchQueue.global(qos: .userInteractive))
+        print("ScreenExtender: Stream output added")
+    }
+    
+    func startStreaming() {
+        guard !isStreaming else {
+            print("ScreenExtender: Already streaming")
+            return
+        }
+        
+        guard isInitialized else {
+            print("ScreenExtender: Not initialized yet")
+            return
+        }
+        
+        print("ScreenExtender: Starting stream...")
         Task {
             do {
-                // Get the main display
-                let displays = try await SCShareableContent.current.displays
-                guard let display = displays.first else {
-                    print("No display found")
-                    return
-                }
-                
-                // Create filter for the display
-                let filter = SCContentFilter(display: display, excludingWindows: [])
-                
-                // Configure stream
-                let configuration = SCStreamConfiguration()
-                configuration.width = 1920
-                configuration.height = 1080
-                configuration.minimumFrameInterval = CMTime(value: 1, timescale: 60)
-                configuration.pixelFormat = kCVPixelFormatType_32BGRA
-                
-                // Create stream
-                stream = SCStream(filter: filter, configuration: configuration, delegate: self)
-                
-                // Add stream output
-                try await stream?.addStreamOutput(self, type: .screen, sampleHandlerQueue: DispatchQueue.global(qos: .userInteractive))
+                try await setupScreenCapture()
+                try await stream?.startCapture()
+                isStreaming = true
+                print("ScreenExtender: Stream started successfully")
             } catch {
-                print("Failed to setup screen capture: \(error)")
+                print("ScreenExtender: Failed to start capture: \(error)")
+                // Notify client of error
+                let errorData = "Error: \(error.localizedDescription)".data(using: .utf8) ?? Data()
+                webSocketServer?.broadcast(data: errorData)
             }
         }
     }
     
-    private func startStreaming() {
+    func stopStreaming() {
+        guard isStreaming else {
+            print("ScreenExtender: Not streaming")
+            return
+        }
+        
+        print("ScreenExtender: Stopping stream...")
         Task {
             do {
-                try await stream?.startCapture()
+                try await stream?.stopCapture()
+                isStreaming = false
+                print("ScreenExtender: Stream stopped successfully")
             } catch {
-                print("Failed to start capture: \(error)")
+                print("ScreenExtender: Failed to stop capture: \(error)")
             }
         }
+    }
+    
+    func updateConfiguration(_ newConfig: Configuration) {
+        print("ScreenExtender: Updating configuration...")
+        let wasStreaming = isStreaming
+        if wasStreaming {
+            stopStreaming()
+        }
+        
+        configuration = newConfig
+        setupVideoEncoder()
+        
+        if wasStreaming {
+            startStreaming()
+        }
+        print("ScreenExtender: Configuration updated")
     }
     
     deinit {
-        Task {
-            try? await stream?.stopCapture()
-        }
+        print("ScreenExtender: Cleaning up...")
+        stopStreaming()
+        videoEncoder = nil
+        print("ScreenExtender: Cleanup complete")
     }
 }
 
 // MARK: - SCStreamDelegate
 extension ScreenExtender: SCStreamDelegate {
     func stream(_ stream: SCStream, didStopWithError error: Error) {
-        print("Stream stopped with error: \(error)")
+        print("ScreenExtender: Stream stopped with error: \(error)")
+        isStreaming = false
+        // Try to restart the stream after a brief delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            print("ScreenExtender: Attempting to restart stream...")
+            self?.startStreaming()
+        }
     }
 }
 
@@ -100,7 +200,8 @@ extension ScreenExtender: SCStreamDelegate {
 extension ScreenExtender: SCStreamOutput {
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
         guard type == .screen,
-              let pixelBuffer = sampleBuffer.imageBuffer else { return }
+              let pixelBuffer = sampleBuffer.imageBuffer,
+              isStreaming else { return }
         
         videoEncoder?.encode(pixelBuffer)
     }
