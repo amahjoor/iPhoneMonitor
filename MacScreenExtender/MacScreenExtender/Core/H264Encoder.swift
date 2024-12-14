@@ -149,89 +149,6 @@ class H264Encoder {
         // Prepare session
         VTCompressionSessionPrepareToEncodeFrames(session)
         
-        // Create a sample frame to get format description
-        guard let sampleBuffer = createSampleBuffer(session: session) else {
-            print("H264Encoder: Failed to create sample buffer for format description")
-            return
-        }
-        
-        guard let formatDesc = CMSampleBufferGetFormatDescription(sampleBuffer) else {
-            print("H264Encoder: Failed to get format description from sample buffer")
-            return
-        }
-        
-        self.formatDescription = formatDesc
-        
-        // Get SPS and PPS
-        var spsCount: Int = 0
-        var spsSize: Int = 0
-        var ppsCount: Int = 0
-        var ppsSize: Int = 0
-        
-        var status2 = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
-            formatDesc,
-            parameterSetIndex: 0,
-            parameterSetPointerOut: nil,
-            parameterSetSizeOut: &spsSize,
-            parameterSetCountOut: &spsCount,
-            nalUnitHeaderLengthOut: nil
-        )
-        
-        let status3 = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
-            formatDesc,
-            parameterSetIndex: 1,
-            parameterSetPointerOut: nil,
-            parameterSetSizeOut: &ppsSize,
-            parameterSetCountOut: &ppsCount,
-            nalUnitHeaderLengthOut: nil
-        )
-        
-        if status2 == noErr && status3 == noErr {
-            var spsBytes = [UInt8](repeating: 0, count: spsSize)
-            var ppsBytes = [UInt8](repeating: 0, count: ppsSize)
-            var spsPointer: UnsafePointer<UInt8>?
-            var ppsPointer: UnsafePointer<UInt8>?
-            
-            CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
-                formatDesc,
-                parameterSetIndex: 0,
-                parameterSetPointerOut: &spsPointer,
-                parameterSetSizeOut: nil,
-                parameterSetCountOut: nil,
-                nalUnitHeaderLengthOut: nil
-            )
-            
-            CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
-                formatDesc,
-                parameterSetIndex: 1,
-                parameterSetPointerOut: &ppsPointer,
-                parameterSetSizeOut: nil,
-                parameterSetCountOut: nil,
-                nalUnitHeaderLengthOut: nil
-            )
-            
-            if let spsPointer = spsPointer, let ppsPointer = ppsPointer {
-                spsBytes.withUnsafeMutableBufferPointer { buffer in
-                    buffer.baseAddress?.initialize(from: spsPointer, count: spsSize)
-                }
-                ppsBytes.withUnsafeMutableBufferPointer { buffer in
-                    buffer.baseAddress?.initialize(from: ppsPointer, count: ppsSize)
-                }
-                
-                // Store SPS and PPS with start codes
-                let startCode = Data([0x00, 0x00, 0x00, 0x01])
-                self.sps = startCode + Data(spsBytes)
-                self.pps = startCode + Data(ppsBytes)
-                print("H264Encoder: Got SPS (\(spsSize) bytes) and PPS (\(ppsSize) bytes)")
-                
-                // Send initial SPS and PPS
-                if let onEncodedFrame = onEncodedFrame {
-                    onEncodedFrame(self.sps!)
-                    onEncodedFrame(self.pps!)
-                }
-            }
-        }
-        
         print("H264Encoder: Encoder setup complete")
     }
     
@@ -254,12 +171,11 @@ class H264Encoder {
         }
         
         // Encode a single frame
-        var flags = VTEncodeInfoFlags()
         let presentationTimeStamp = CMTime(value: 0, timescale: 1)
         let duration = CMTime(value: 1, timescale: Int32(frameRate))
         
-        var sampleBuffer: CMSampleBuffer?
         var outputFlags: VTEncodeInfoFlags = []
+        var sampleBuffer: CMSampleBuffer?
         
         let encodeStatus = VTCompressionSessionEncodeFrame(
             session,
@@ -294,82 +210,6 @@ class H264Encoder {
             forceNextKeyframe = true
             frameCount = 0
             print("H264Encoder: Forcing keyframe due to interval")
-            
-            // Force SPS and PPS regeneration
-            var formatDesc: CMFormatDescription?
-            let status = CMVideoFormatDescriptionCreateForImageBuffer(
-                allocator: kCFAllocatorDefault,
-                imageBuffer: pixelBuffer,
-                formatDescriptionOut: &formatDesc
-            )
-            
-            if status == noErr, let formatDescription = formatDesc {
-                self.formatDescription = formatDescription
-                
-                // Get SPS and PPS
-                var spsCount: Int = 0
-                var spsSize: Int = 0
-                var ppsCount: Int = 0
-                var ppsSize: Int = 0
-                
-                let status2 = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
-                    formatDescription,
-                    parameterSetIndex: 0,
-                    parameterSetPointerOut: nil,
-                    parameterSetSizeOut: &spsSize,
-                    parameterSetCountOut: &spsCount,
-                    nalUnitHeaderLengthOut: nil
-                )
-                
-                let status3 = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
-                    formatDescription,
-                    parameterSetIndex: 1,
-                    parameterSetPointerOut: nil,
-                    parameterSetSizeOut: &ppsSize,
-                    parameterSetCountOut: &ppsCount,
-                    nalUnitHeaderLengthOut: nil
-                )
-                
-                if status2 == noErr && status3 == noErr {
-                    var spsBytes = [UInt8](repeating: 0, count: spsSize)
-                    var ppsBytes = [UInt8](repeating: 0, count: ppsSize)
-                    var spsPointer: UnsafePointer<UInt8>?
-                    var ppsPointer: UnsafePointer<UInt8>?
-                    
-                    CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
-                        formatDescription,
-                        parameterSetIndex: 0,
-                        parameterSetPointerOut: &spsPointer,
-                        parameterSetSizeOut: nil,
-                        parameterSetCountOut: nil,
-                        nalUnitHeaderLengthOut: nil
-                    )
-                    
-                    CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
-                        formatDescription,
-                        parameterSetIndex: 1,
-                        parameterSetPointerOut: &ppsPointer,
-                        parameterSetSizeOut: nil,
-                        parameterSetCountOut: nil,
-                        nalUnitHeaderLengthOut: nil
-                    )
-                    
-                    if let spsPointer = spsPointer, let ppsPointer = ppsPointer {
-                        spsBytes.withUnsafeMutableBufferPointer { buffer in
-                            buffer.baseAddress?.initialize(from: spsPointer, count: spsSize)
-                        }
-                        ppsBytes.withUnsafeMutableBufferPointer { buffer in
-                            buffer.baseAddress?.initialize(from: ppsPointer, count: ppsSize)
-                        }
-                        
-                        // Store SPS and PPS with start codes
-                        let startCode = Data([0x00, 0x00, 0x00, 0x01])
-                        self.sps = startCode + Data(spsBytes)
-                        self.pps = startCode + Data(ppsBytes)
-                        print("H264Encoder: Updated SPS (\(spsSize) bytes) and PPS (\(ppsSize) bytes)")
-                    }
-                }
-            }
         }
         
         let presentationTimeStamp = CMTime(seconds: CACurrentMediaTime(), preferredTimescale: CMTimeScale(frameRate * 2))
@@ -443,22 +283,123 @@ private func compressCallback(
     guard blockBufferStatus == kCMBlockBufferNoErr,
           let pointer = dataPointer else { return }
     
-    var nalData = Data(bytes: pointer, count: length)
-    
     // Check if this is a keyframe
-    if let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false) as? [[CFString: Any]],
-       let notSync = attachments.first?[kCMSampleAttachmentKey_NotSync] as? Bool,
-       !notSync {
-        print("H264Encoder: Sending keyframe with SPS/PPS")
-        // For keyframes, prepend SPS and PPS
-        if let sps = encoder.sps, let pps = encoder.pps {
-            nalData = sps + pps + encoder.packageNALUnit(nalData)
+    let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false) as? [[CFString: Any]]
+    let isKeyframe = attachments?.first?[kCMSampleAttachmentKey_NotSync] == nil
+    
+    if isKeyframe {
+        print("H264Encoder: Keyframe detected")
+        
+        // For keyframes, get fresh SPS and PPS
+        if let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer) {
+            var spsSize: Int = 0
+            var spsCount: Int = 0
+            var ppsSize: Int = 0
+            var ppsCount: Int = 0
+            
+            // Get SPS
+            CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
+                formatDescription,
+                parameterSetIndex: 0,
+                parameterSetPointerOut: nil,
+                parameterSetSizeOut: &spsSize,
+                parameterSetCountOut: &spsCount,
+                nalUnitHeaderLengthOut: nil
+            )
+            
+            // Get PPS
+            CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
+                formatDescription,
+                parameterSetIndex: 1,
+                parameterSetPointerOut: nil,
+                parameterSetSizeOut: &ppsSize,
+                parameterSetCountOut: &ppsCount,
+                nalUnitHeaderLengthOut: nil
+            )
+            
+            var spsData: Data?
+            var ppsData: Data?
+            
+            if spsSize > 0 {
+                var spsPointer: UnsafePointer<UInt8>?
+                CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
+                    formatDescription,
+                    parameterSetIndex: 0,
+                    parameterSetPointerOut: &spsPointer,
+                    parameterSetSizeOut: nil,
+                    parameterSetCountOut: nil,
+                    nalUnitHeaderLengthOut: nil
+                )
+                if let spsPtr = spsPointer {
+                    spsData = Data(bytes: spsPtr, count: spsSize)
+                }
+            }
+            
+            if ppsSize > 0 {
+                var ppsPointer: UnsafePointer<UInt8>?
+                CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
+                    formatDescription,
+                    parameterSetIndex: 1,
+                    parameterSetPointerOut: &ppsPointer,
+                    parameterSetSizeOut: nil,
+                    parameterSetCountOut: nil,
+                    nalUnitHeaderLengthOut: nil
+                )
+                if let ppsPtr = ppsPointer {
+                    ppsData = Data(bytes: ppsPtr, count: ppsSize)
+                }
+            }
+            
+            // Send SPS and PPS with start codes
+            let startCode = Data([0x00, 0x00, 0x00, 0x01])
+            
+            if let spsData = spsData {
+                let spsWithStartCode = startCode + spsData
+                print("H264Encoder: Sending SPS (\(spsData.count) bytes)")
+                DispatchQueue.main.async {
+                    encoder.onEncodedFrame?(spsWithStartCode)
+                }
+            }
+            
+            if let ppsData = ppsData {
+                let ppsWithStartCode = startCode + ppsData
+                print("H264Encoder: Sending PPS (\(ppsData.count) bytes)")
+                DispatchQueue.main.async {
+                    encoder.onEncodedFrame?(ppsWithStartCode)
+                }
+            }
         }
-    } else {
-        nalData = encoder.packageNALUnit(nalData)
     }
     
-    DispatchQueue.main.async {
-        encoder.onEncodedFrame?(nalData)
+    // Get NAL units from the sample buffer
+    var nalUnits: [Data] = []
+    var currentOffset = 0
+    
+    while currentOffset < length {
+        var nalLength: UInt32 = 0
+        memcpy(&nalLength, pointer.advanced(by: currentOffset), 4)
+        
+        // Convert from big-endian to host
+        nalLength = CFSwapInt32BigToHost(nalLength)
+        
+        let nalStartOffset = currentOffset + 4
+        let nalData = Data(bytes: pointer.advanced(by: nalStartOffset), count: Int(nalLength))
+        
+        // Add start code and NAL unit
+        let startCode = Data([0x00, 0x00, 0x00, 0x01])
+        nalUnits.append(startCode + nalData)
+        
+        currentOffset = nalStartOffset + Int(nalLength)
+    }
+    
+    // Send each NAL unit
+    for nalUnit in nalUnits {
+        if let firstByte = nalUnit.dropFirst(4).first {
+            let nalType = firstByte & 0x1F
+            print("H264Encoder: Sending NAL unit type \(nalType) (\(nalUnit.count) bytes)")
+            DispatchQueue.main.async {
+                encoder.onEncodedFrame?(nalUnit)
+            }
+        }
     }
 }
