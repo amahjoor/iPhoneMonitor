@@ -85,7 +85,7 @@ struct ContentView: View {
         if webSocketClient.isConnected {
             webSocketClient.disconnect()
         } else {
-            webSocketClient.connect(to: "localhost", port: 8080)
+            webSocketClient.connect(to: "172.20.10.3", port: 8080)
         }
     }
 }
